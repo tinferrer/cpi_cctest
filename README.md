@@ -1,24 +1,19 @@
 # cpi_cctest
 
-echo "# testing" >> README.md
-git init
-git add README.md
-git commit -m "first commit"
-git remote add origin https://github.com/tinferrer/testing.git
-git push -u origin master
 
 
-
-1. Host: Clone and change directory to cpi_test/host
+1. Host cross-compilation: clone this repository and change directory to cpi_test/host
 
 	```
+	git clone https://github.com/tinferrer/cpi_cctest.git
 	cd cpi_test/host
 	```
 
-2. cross compile to the target arm-linux-gnueabihf
+2. clang's cross compile to the target arm-linux-gnueabihf with optee. Before this, you need to install arm-linux and it assumes you have /usr/arm-linux-gnueabihf(https://packages.ubuntu.com/trusty/devel/gcc-arm-linux-gnueabihf).
+And please check optee build in https://github.com/OP-TEE/build.
 
 	```
-	clang -target arm-linux-gnueabihf --sysroot=/usr/arm-linux-gnueabihf -static test_function_call_client.c -emit-llvm -c -I /home/kijin/devel/optee/optee_client/out/export/include/ -I ../ta/include/
+	clang -target arm-linux-gnueabihf --sysroot=/usr/arm-linux-gnueabihf -static test_function_call_client.c -emit-llvm -c -I ~/devel/optee/optee_client/out/export/include/ -I ../ta/include/
 
 	```
 
