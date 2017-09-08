@@ -50,13 +50,19 @@ And please check optee build in https://github.com/OP-TEE/build.(target:default.
 	```
 	cd ta
 	```
-2. Clang compile for hello_world_ta.bc
+2. Clang compile for hello_world_ta.bc and hello_world_ta.s
 	```
 	clang -target arm-linux-gnueabihf --sysroot=/usr/arm-linux-gnueabihf -static hello_world_ta.c user_ta_header_defines.h -emit-llvm -c -I ./include/ -I ~/devel/optee/optee_os/out/arm/export-ta_arm32/include/
 	```
-2. Clang compile for user_ta_header.bc
+	```
+	llc hello_world_ta.bc
+	```
+2. Clang compile for user_ta_header.bc and user_ta_header.s
 	```
 	clang -target arm-linux-gnueabihf --sysroot=/usr/arm-linux-gnueabihf -static hello_world_ta.c ~/devel/optee/optee_os/out/arm/export-ta_arm32/src/user_ta_header.c -emit-llvm -c -I ./include/ -I ~/devel/optee/optee_os/out/arm/export-ta_arm32/include/ -I .
+	```
+	```
+	llc user_ta_header.bc
 	```
 5. Then you can continue the cross-compilation at docker. Copy the intermidate binary code to docker 
 	```
