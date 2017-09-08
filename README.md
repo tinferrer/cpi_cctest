@@ -11,7 +11,7 @@ This document is based on https://github.com/jenswi-linaro/lcu14_optee_hello_wor
 	```
 
 2. clang's cross compile to the target arm-linux-gnueabihf with optee. Before this, you need to install arm-linux and it assumes you have /usr/arm-linux-gnueabihf(https://packages.ubuntu.com/trusty/devel/gcc-arm-linux-gnueabihf).
-And please check optee build in https://github.com/OP-TEE/build.
+And please check optee build in https://github.com/OP-TEE/build.(target:default.xml)
 
 	```
 	clang -target arm-linux-gnueabihf --sysroot=/usr/arm-linux-gnueabihf -static hello_world.c -emit-llvm -c -I ~/devel/optee/optee_client/out/export/include/ -I ../ta/include/
@@ -74,14 +74,14 @@ And please check optee build in https://github.com/OP-TEE/build.
 
 8.   Generate .dmp  
 	```
-	~/qemu-optee/toolchains/aarch32/bin/arm-linux-gnueabihf-objdump -l -x -d 08430668-3463-4c83-9593-a18350f54b57.elf > 08430668-3463-4c83-9593-a18350f54b57.dmp
+	~/qemu-optee/toolchains/aarch32/bin/arm-linux-gnueabihf-objdump -l -x -d 8aaaf200-2450-11e4-abe2-0002a5d5c51b.elf > 8aaaf200-2450-11e4-abe2-0002a5d5c51b.dmp
 	```
 8.   Generate .stripped.elf
 	```
 	 ~/qemu-optee/toolchains/aarch32/bin/arm-linux-gnueabihf-objcopy --strip-unneeded 8aaaf200-2450-11e4-abe2-0002a5d5c51b.elf 8aaaf200-2450-11e4-abe2-0002a5d5c51b.stripped.elf
 	```
-9.   Generate .ta	
 
+9.   Generate .ta	
 	```
 	/home/optee/qemu-optee/optee_os/out/arm/export-ta_arm32/scripts/sign.py --key /home/optee/qemu-optee/optee_os/out/arm/export-ta_arm32/keys/default_ta.pem --in 8aaaf200-2450-11e4-abe2-0002a5d5c51b.stripped.elf --out 8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta
 	```
