@@ -25,3 +25,25 @@ make[2]: *** [src/firmware/posix/CMakeFiles/px4.dir/all] Error 2
 make[1]: *** [all] Error 2
 make: *** [posix_rpi_cross] Error 2
 
+
+should something described  related to linker
+px4_add_module(
+        MODULE modules__sensors
+        MAIN sensors
+        PRIORITY "SCHED_PRIORITY_MAX-5"
+        STACK_MAIN 1300
+        COMPILE_FLAGS
+                -Wno-sign-compare # TODO: fix all sign-compare
+        SRCS
+                voted_sensors_update.cpp
+                rc_update.cpp
+                host.o
+                #sensors_new.cpp
+                sensors_new.cpp
+                parameters.cpp
+                temperature_compensation.cpp
+
+        DEPENDS
+                platforms__common
+        )
+# vim: set noet ft=cmake
