@@ -1,4 +1,4 @@
-#
+
 # Common definition to all platforms
 #
 
@@ -15,9 +15,13 @@ OPTEE_OS_PATH			?= $(ROOT)/optee_os
 OPTEE_CLIENT_PATH		?= $(ROOT)/optee_client
 OPTEE_CLIENT_EXPORT		?= $(OPTEE_CLIENT_PATH)/out/export
 OPTEE_TEST_PATH			?= $(ROOT)/optee_test
+HELLO_PATH			?= $(ROOT)/hello_world
+JNI_PATH			?= $(ROOT)/cpi_cctest/output
+JRE_PATH			?= $(ROOT)/cpi_cctest
 OPTEE_TEST_OUT_PATH		?= $(ROOT)/optee_test/out
-HELLOWORLD_PATH			?= $(ROOT)/hello_world
+OPTEE_EXAMPLES_PATH		?= $(ROOT)/optee_examples
 BENCHMARK_APP_PATH		?= $(ROOT)/optee_benchmark
+LIBYAML_LIB_PATH		?= $(BENCHMARK_APP_PATH)/libyaml/out/lib
 
 # default high verbosity. slow uarts shall specify lower if prefered
 CFG_TEE_CORE_LOG_LEVEL		?= 3
@@ -36,6 +40,16 @@ QEMU_VIRTFS_HOST_DIR	?= $(ROOT)
 
 # Enable SLiRP user networking
 QEMU_USERNET_ENABLE		?= n
+
+################################################################################
+# Mandatory for autotools (for specifying --host)
+################################################################################
+ifeq ($(COMPILE_NS_USER),64)
+MULTIARCH			:= aarch64-linux-gnu
+else
+MULTIARCH			:= arm-linux-gnueabihf
+endif
+
 ################################################################################
 # Check coherency of compilation mode
 ################################################################################
@@ -76,6 +90,9 @@ endif
 ifneq ($(COMPILE_S_KERNEL),)
 OPTEE_OS_COMMON_EXTRA_FLAGS ?= O=out/arm
 OPTEE_OS_BIN		    ?= $(OPTEE_OS_PATH)/out/arm/core/tee.bin
+OPTEE_OS_HEADER_V2_BIN	    ?= $(OPTEE_OS_PATH)/out/arm/core/tee-header_v2.bin
+OPTEE_OS_PAGER_V2_BIN	    ?= $(OPTEE_OS_PATH)/out/arm/core/tee-pager_v2.bin
+OPTEE_OS_PAGEABLE_V2_BIN    ?= $(OPTEE_OS_PATH)/out/arm/core/tee-pageable_v2.bin
 ifeq ($(COMPILE_S_USER),)
 $(error COMPILE_S_USER must be defined as COMPILE_S_KERNEL=$(COMPILE_S_KERNEL) is defined)
 endif
@@ -297,7 +314,7 @@ OPTEE_OS_CLEAN_COMMON_FLAGS ?= $(OPTEE_OS_COMMON_EXTRA_FLAGS)
 ifeq ($(CFG_TEE_BENCHMARK),y)
 optee-os-clean-common: benchmark-app-clean-common
 endif
-optee-os-clean-common: xtest-clean helloworld-clean
+optee-os-clean-common: xtest-clean optee-examples-clean
 	$(MAKE) -C $(OPTEE_OS_PATH) $(OPTEE_OS_CLEAN_COMMON_FLAGS) clean
 
 OPTEE_CLIENT_COMMON_FLAGS ?= CROSS_COMPILE=$(CROSS_COMPILE_NS_USER) \
@@ -343,29 +360,31 @@ xtest-patch-common:
 	$(MAKE) -C $(OPTEE_TEST_PATH) $(XTEST_PATCH_COMMON_FLAGS) patch
 
 ################################################################################
-# hello_world
+# sample applications / optee_examples
 ################################################################################
-HELLOWORLD_COMMON_FLAGS ?= HOST_CROSS_COMPILE=$(CROSS_COMPILE_NS_USER)\
+OPTEE_EXAMPLES_COMMON_FLAGS ?= HOST_CROSS_COMPILE=$(CROSS_COMPILE_NS_USER)\
 	TA_CROSS_COMPILE=$(CROSS_COMPILE_S_USER) \
 	TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR) \
 	TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT)
 
-.PHONY: helloworld-common
-helloworld-common: optee-os optee-client
-	$(MAKE) -C $(HELLOWORLD_PATH) $(HELLOWORLD_COMMON_FLAGS)
+.PHONY: optee-examples-common
+optee-examples-common: optee-os optee-client
+	$(MAKE) -C $(OPTEE_EXAMPLES_PATH) $(OPTEE_EXAMPLES_COMMON_FLAGS)
 
-HELLOWORLD_CLEAN_COMMON_FLAGS ?= TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
+OPTEE_EXAMPLES_CLEAN_COMMON_FLAGS ?= TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
 
-.PHONY: helloworld-clean-common
-helloworld-clean-common:
-	$(MAKE) -C $(HELLOWORLD_PATH) $(HELLOWORLD_CLEAN_COMMON_FLAGS) clean
+.PHONY: optee-examples-clean-common
+optee-examples-clean-common:
+	$(MAKE) -C $(OPTEE_EXAMPLES_PATH) \
+			$(OPTEE_EXAMPLES_CLEAN_COMMON_FLAGS) clean
 
 ################################################################################
 # benchmark_app
 ################################################################################
 BENCHMARK_APP_COMMON_FLAGS ?= CROSS_COMPILE=$(CROSS_COMPILE_NS_USER) \
 	TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT) \
-	TEEC_INTERNAL_INCLUDES=$(OPTEE_CLIENT_PATH)/libteec
+	TEEC_INTERNAL_INCLUDES=$(OPTEE_CLIENT_PATH)/libteec \
+	MULTIARCH=$(MULTIARCH)
 
 .PHONY: benchmark-app-common
 benchmark-app-common: optee-os optee-client
@@ -374,58 +393,6 @@ benchmark-app-common: optee-os optee-client
 .PHONY: benchmark-app-clean-common
 benchmark-app-clean-common:
 	$(MAKE) -C $(BENCHMARK_APP_PATH) clean
-
-################################################################################
-# cpi
-################################################################################
-CPITEST_PATH			?= $(ROOT)/cpi_test
-CPITEST_COMMON_FLAGS ?= HOST_CROSS_COMPILE=$(CROSS_COMPILE_NS_USER)\
-	TA_CROSS_COMPILE=$(CROSS_COMPILE_S_USER) \
-	TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR) \
-	TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT)
-
-cpitest-common: optee-os optee-client
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_COMMON_FLAGS)
-
-CPITEST_CLEAN_COMMON_FLAGS ?= TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
-
-cpitest-clean-common:
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_CLEAN_COMMON_FLAGS) clean
-
-
-################################################################################
-# cpi
-################################################################################
-CPITEST_PATH			?= $(ROOT)/cpi_test
-CPITEST_COMMON_FLAGS ?= HOST_CROSS_COMPILE=$(CROSS_COMPILE_NS_USER)\
-	TA_CROSS_COMPILE=$(CROSS_COMPILE_S_USER) \
-	TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR) \
-	TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT)
-
-cpitest-common: optee-os optee-client
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_COMMON_FLAGS)
-
-CPITEST_CLEAN_COMMON_FLAGS ?= TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
-
-cpitest-clean-common:
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_CLEAN_COMMON_FLAGS) clean
-
-################################################################################
-# cpi
-################################################################################
-CPITEST_PATH			?= $(ROOT)/cpi_test
-CPITEST_COMMON_FLAGS ?= HOST_CROSS_COMPILE=$(CROSS_COMPILE_NS_USER)\
-	TA_CROSS_COMPILE=$(CROSS_COMPILE_S_USER) \
-	TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR) \
-	TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT)
-
-cpitest-common: optee-os optee-client
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_COMMON_FLAGS)
-
-CPITEST_CLEAN_COMMON_FLAGS ?= TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
-
-cpitest-clean-common:
-	$(MAKE) -C $(CPITEST_PATH) $(CPITEST_CLEAN_COMMON_FLAGS) clean
 
 ################################################################################
 # rootfs
@@ -450,35 +417,50 @@ ifeq ($(CFG_TEE_BENCHMARK),y)
 filelist-tee-common: benchmark-app
 endif
 filelist-tee-common: fl:=$(GEN_ROOTFS_FILELIST)
-filelist-tee-common: optee-client xtest helloworld cpitest
+filelist-tee-common: optee-client xtest optee-examples
 	@echo "# filelist-tee-common /start" 				> $(fl)
 	@echo "dir /lib/optee_armtz 755 0 0" 				>> $(fl)
+	@if [ -e $(OPTEE_EXAMPLES_PATH)/out/ca ]; then \
+		for file in $(OPTEE_EXAMPLES_PATH)/out/ca/*; do \
+			echo "file /usr/bin/$$(basename $$file)" \
+			"$$file 755 0 0"				>> $(fl); \
+		done; \
+	fi
+	@if [ -e $(OPTEE_EXAMPLES_PATH)/out/ta ]; then \
+		for file in $(OPTEE_EXAMPLES_PATH)/out/ta/*; do \
+			echo "file /lib/optee_armtz/$$(basename $$file)" \
+			"$$file 755 0 0"				>> $(fl); \
+		done; \
+	fi
+	@if [ -e $(JRE_PATH)/jre ]; then \
+		echo "file /bin/jre" \
+			"$(JRE_PATH)/jre 755 0 0"	>> $(fl); \
+	fi
+	@if [ -e $(JNI_PATH)/host/jni ]; then \
+		echo "file /bin/jni" \
+			"$(JNI_PATH)/host/jni 755 0 0"	>> $(fl); \
+		echo "file /lib/optee_armtz/08430668-3463-4c83-9593-a18350f54b57.ta" \
+			"$(JNI_PATH)/ta/08430668-3463-4c83-9593-a18350f54b57.ta" \
+		"444 0 0" >> $(fl); \
+	fi
+	@if [ -e $(HELLO_PATH)/host/Hello1]; then \
+		echo "file /bin/Hello1" \
+			"$(HELLO_PATH)/host/Hello1 755 0 0"	>> $(fl); \
+	fi
 	@echo "# xtest / optee_test" 					>> $(fl)
 	@find $(OPTEE_TEST_OUT_PATH) -type f -name "xtest" | \
 		sed 's/\(.*\)/file \/bin\/xtest \1 755 0 0/g' 		>> $(fl)
 	@find $(OPTEE_TEST_OUT_PATH) -name "*.ta" | \
 		sed 's/\(.*\)\/\(.*\)/file \/lib\/optee_armtz\/\2 \1\/\2 444 0 0/g' \
 									>> $(fl)
-	@if [ -e $(HELLOWORLD_PATH)/host/hello_world ]; then \
-		echo "file /bin/hello_world" \
-			"$(HELLOWORLD_PATH)/host/hello_world 755 0 0"	>> $(fl); \
-		echo "file /lib/optee_armtz/18aaaf200-2450-11e4-abe2-0002a5d5c51b.ta" \
-			"$(HELLOWORLD_PATH)/ta/8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta" \
-			"444 0 0" 					>> $(fl); \
-	fi
 	@if [ -e $(BENCHMARK_APP_PATH)/benchmark ]; then \
 		echo "file /bin/benchmark" \
 			"$(BENCHMARK_APP_PATH)/benchmark 755 0 0"	>> $(fl); \
+		echo "slink /lib/libyaml-0.so.2 libyaml-0.so.2.0.5 755 0 0" \
+									>> $(fl); \
+		echo "file /lib/libyaml-0.so.2.0.5 $(LIBYAML_LIB_PATH)/libyaml-0.so.2.0.5 755 0 0" \
+									>> $(fl); \
 	fi
-
-	@if [ -e $(CPITEST_PATH)/host/cchello_world2 ]; then \
-		echo "file /bin/cchello_world2" \
-			"$(CPITEST_PATH)/host/cchello_world2 755 0 0"	>> $(fl); \
-		echo "file /lib/optee_armtz/8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta" \
-			"$(CPITEST_PATH)/ta//8aaaf200-2450-11e4-abe2-0002a5d5c51b.ta" \
-			"444 0 0" 					>> $(fl); \
-	fi
-
 	@if [ "$(QEMU_USERNET_ENABLE)" = "y" ]; then \
 		echo "slink /etc/rc.d/S02_udhcp_networking /etc/init.d/udhcpc 755 0 0" \
 		>> $(fl); \
