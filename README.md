@@ -102,7 +102,7 @@ And please check optee build in https://github.com/OP-TEE/build.(target:default.
 	```  
 	
 	
-# Coarsely flush jre(it was jre.tar.gz) to normal work
+# Coarsely flush jre(it was jre.tar.gz) to normal world
 copy jre to ```/bin/jre``` using ```common.mk```
 ```
 @if [ -e $(JRE_PATH)/jre ]; then \
