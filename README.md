@@ -103,9 +103,10 @@ And please check optee build in https://github.com/OP-TEE/build.(target:default.
 	
 	
 # Coarsely flush jre(it was jre.tar.gz) to normal work
-copy jre to /bin/jre using common.mk
+copy jre to ```/bin/jre``` using ```common.mk```
 
 (In normal world terminal)
+```
 cd /bin
 mv jre jre.tar.gz && tar xvf jre.tar.gz && cp -r jre/bin/* /bin/ && cp -r jre/lib/* /lib/
-
+```
