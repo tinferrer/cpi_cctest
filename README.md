@@ -116,3 +116,36 @@ fi
 cd /bin
 mv jre jre.tar.gz && tar xvf jre.tar.gz && cp -r jre/bin/* /bin/ && cp -r jre/lib/* /lib/
 ```
+# Secure Bit-coin wallet build and test
+```
+cd /home/optee/qemu-optee
+git clone https://github.com/Miraje/TrustZone-backed-Bitcoin-Wallet.git wallet
+cd wallet
+```
+```
+ export HOST_CROSS_COMPILE=$PWD/../toolchains/aarch32/bin/arm-linux-gnueabihf-
+
+ export TA_CROSS_COMPILE=$PWD/../toolchains/aarch32/bin/arm-linux-gnueabihf-
+ export TEEC_EXPORT=$PWD/../optee_client/out/export
+ export TA_DEV_KIT_DIR=$PWD/../optee_os/out/arm/export-ta_arm32
+```
+# build
+```
+  make
+```
+# edit common.mk
+```
+BITCOIN_PATH                    ?= $(ROOT)/wallet
+...
+        @if [ -e $(BITCOIN_PATH)/host/wallet ]; then \
+                echo "file /bin/wallet" \
+                        "$(BITCOIN_PATH)/host/wallet 755 0 0"   >> $(fl); \
+                echo "file /lib/optee_armtz/f894e6e0-1215-11e6-92810002a5d5c51b.ta" \
+                        "$(BITCOIN_PATH)/ta/f894e6e0-1215-11e6-92810002a5d5c51b.ta" \
+                "444 0 0" >> $(fl); \
+        fi
+
+```
+
+
+
